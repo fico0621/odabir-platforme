@@ -20,4 +20,4 @@ Sve je u jednoj HTML datoteci (HTML, CSS i JavaScript), bez vanjskih biblioteka,
 - Preporuka konkretnog modela iz ponude strojeva
 - Slanje upita izravno tvrtki
 
-*Demo projekt – Filip Špiček. Nije službena stranica tvrtke.*
+*Demo projekt – Filip Špiček.*
