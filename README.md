@@ -1,0 +1,1 @@
+# odabir-platforme
