@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pomoćnik za odabir platforme (demo)</title>
+<meta name="description" content="Odgovori na pet pitanja i saznaj koja podizna platforma ti treba za rad na visini.">
+<meta name="theme-color" content="#1f2933">
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --ink: #1f2933;
+    --muted: #52606d;
+    --line: #dfe3e8;
+    --accent: #c2410c;
+    --accent-dark: #9a3412;
+    --accent-soft: #fff4ec;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 20px 16px 28px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Zaglavlje */
+  .top { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--ink); color: #fff;
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .logo svg { width: 30px; height: 30px; }
+  .top h1 { font-size: 1.1rem; margin: 0; line-height: 1.25; }
+  .top p { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
+  main { flex: 1; }
+
+  /* Kartica */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+  }
+  @media (min-width: 560px) { .card { padding: 32px; } }
+
+  .step { font-size: .85rem; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
+  .bar { height: 6px; background: #eceff3; border-radius: 99px; overflow: hidden; margin-bottom: 24px; }
+  .bar span { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+
+  h2 { font-size: 1.4rem; line-height: 1.3; margin: 0 0 6px; outline: none; }
+  .hint { color: var(--muted); margin: 0; }
+
+  /* Odgovori */
+  .options { display: grid; gap: 10px; margin-top: 20px; }
+  .opt {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    width: 100%; min-height: 56px; padding: 14px 16px;
+    font: inherit; font-weight: 600; font-size: 1.02rem; text-align: left;
+    color: var(--ink); background: #fff;
+    border: 1.5px solid var(--line); border-radius: 12px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s, transform .05s;
+  }
+  .opt svg { flex-shrink: 0; color: #9aa5b1; transition: color .15s, transform .15s; }
+  .opt:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .opt:hover svg { color: var(--accent); transform: translateX(2px); }
+  .opt:active { transform: scale(.99); }
+  .opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .opt[aria-pressed="true"] svg { color: var(--accent); }
+
+  button:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 3px solid rgba(194,65,12,.35);
+    outline-offset: 2px;
+  }
+
+  .nav { margin-top: 18px; }
+  .link {
+    display: inline-flex; align-items: center; gap: 6px;
+    min-height: 44px; padding: 0 4px;
+    font: inherit; font-weight: 600; color: var(--muted);
+    background: none; border: 0; cursor: pointer;
+  }
+  .link:hover { color: var(--ink); }
+
+  /* Rezultat */
+  .eyebrow {
+    font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 8px;
+  }
+  .rec { display: flex; gap: 16px; align-items: center; }
+  .rec-icon {
+    width: 72px; height: 72px; border-radius: 18px;
+    background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .rec-icon svg { width: 52px; height: 52px; }
+  .rec h2 { margin: 0; }
+  .tag {
+    display: inline-block; margin-top: 6px;
+    font-size: .85rem; font-weight: 600;
+    color: var(--accent-dark); background: var(--accent-soft);
+    border-radius: 99px; padding: 3px 10px;
+  }
+  .why { margin: 20px 0 0; font-size: 1.02rem; }
+  .note { border-radius: 12px; padding: 12px 14px; margin: 12px 0 0; font-size: .95rem; }
+  .note.warn { background: #fffbeb; border: 1px solid #fcd34d; color: #78350f; }
+  .note.info { background: #f5f7fa; border: 1px solid var(--line); color: var(--muted); }
+  .answers {
+    margin: 20px 0 0; padding: 14px 16px;
+    border: 1px solid var(--line); border-radius: 12px;
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 14px;
+    font-size: .95rem;
+  }
+  .answers dt { color: var(--muted); }
+  .answers dd { margin: 0; font-weight: 600; }
+
+  /* Upit */
+  .section { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.15rem; margin: 0 0 4px; }
+  .fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 16px; }
+  .fields > div, .row2 > div { min-width: 0; }
+  .row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  @media (max-width: 420px) { .row2 { grid-template-columns: minmax(0, 1fr); } }
+  label { display: block; font-size: .9rem; font-weight: 600; margin-bottom: 4px; }
+  input {
+    display: block; width: 100%; min-width: 0; min-height: 48px; padding: 10px 12px;
+    font: inherit; color: var(--ink); background: #fff;
+    border: 1.5px solid var(--line); border-radius: 10px;
+  }
+  input:focus { border-color: var(--accent); }
+  .upit-label { margin-top: 16px; }
+  textarea {
+    width: 100%; min-height: 280px; padding: 12px 14px;
+    font: inherit; font-size: .92rem; line-height: 1.5;
+    color: var(--ink); background: #f8f9fb;
+    border: 1.5px solid var(--line); border-radius: 10px;
+    resize: vertical;
+  }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .btn {
+    flex: 1 1 auto;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 48px; padding: 0 18px;
+    font: inherit; font-weight: 700;
+    border-radius: 10px; border: 1.5px solid transparent;
+    cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-dark); }
+  .btn.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
+  .btn.secondary:hover { border-color: var(--ink); }
+  .status { min-height: 1.5em; margin: 8px 0 0; font-size: .92rem; font-weight: 600; color: #0f766e; }
+  .status.err { color: #b42318; }
+  .end-actions { margin-top: 24px; }
+
+  footer { margin-top: 28px; text-align: center; font-size: .85rem; color: var(--muted); }
+
+  .enter { animation: enter .25s ease both; }
+  @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .enter { animation: none; }
+    .opt, .opt svg { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 8h40M14 8v8M50 8v8"/>
+        <rect x="10" y="16" width="44" height="5" rx="1"/>
+        <path d="M16 21l32 11M48 21L16 32M16 32l32 11M48 32L16 43"/>
+        <rect x="10" y="43" width="44" height="7" rx="2"/>
+        <circle cx="19" cy="54" r="4"/>
+        <circle cx="45" cy="54" r="4"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Pomoćnik za odabir platforme (demo)</h1>
+      <p>Odgovori na 5 pitanja i saznaj koja ti platforma treba za rad na visini.</p>
+    </div>
+  </header>
+
+  <main id="app">
+    <noscript><div class="card">Za rad pomoćnika potrebno je uključiti JavaScript u pregledniku.</div></noscript>
+  </main>
+
+  <footer>Demo projekt – Filip Špiček. Nije službena stranica tvrtke.</footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------- Ikone ---------- */
+  const CHEVRON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  const BACK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
+  const svg = (inner) => `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+
+  const ICONS = {
+    skarasta: svg('<path d="M12 8h40M14 8v8M50 8v8"/><rect x="10" y="16" width="44" height="5" rx="1"/><path d="M16 21l32 11M48 21L16 32M16 32l32 11M48 32L16 43"/><rect x="10" y="43" width="44" height="7" rx="2"/><circle cx="19" cy="54" r="4"/><circle cx="45" cy="54" r="4"/>'),
+    zglobna: svg('<rect x="8" y="44" width="30" height="7" rx="2"/><circle cx="15" cy="54.5" r="3.5"/><circle cx="31" cy="54.5" r="3.5"/><path d="M16 44v-5h12v5"/><path d="M22 39L30 22L48 17"/><circle cx="30" cy="22" r="2.5"/><path d="M46 9h12v9H46z"/>'),
+    teleskopska: svg('<rect x="8" y="44" width="30" height="7" rx="2"/><circle cx="15" cy="54.5" r="3.5"/><circle cx="31" cy="54.5" r="3.5"/><path d="M16 44v-5h12v5"/><path d="M22 39L50 14"/><path d="M33.5 25.7l3 3.4"/><path d="M48 6h12v9H48z"/>'),
+    pauk: svg('<rect x="24" y="38" width="16" height="9" rx="2"/><rect x="22" y="47" width="20" height="6" rx="3"/><path d="M24 43L10 53M40 43l14 10M7 53h6M51 53h6"/><path d="M32 38L42 17"/><path d="M38 8h14v9H38z"/>'),
+    vozilo: svg('<path d="M20 43V32h-9l-5 7v4z"/><rect x="6" y="43" width="52" height="5" rx="1"/><circle cx="15" cy="52" r="4"/><circle cx="47" cy="52" r="4"/><path d="M36 43v-4h10v4"/><path d="M41 39L30 17"/><path d="M22 8h14v9H22z"/><path d="M56 48v6M53 54h6"/>')
+  };
+
+  /* ---------- Pitanja ---------- */
+  const QUESTIONS = [
+    {
+      id: 'visina',
+      title: 'Na kojoj visini trebaš raditi?',
+      hint: 'Računaj visinu na kojoj ćeš raditi, na primjer rub krova ili strop.',
+      summary: 'Visina rada',
+      options: [['do8', 'do 8 m'], ['8-14', '8–14 m'], ['14-20', '14–20 m'], ['20-30', '20–30 m'], ['30+', 'preko 30 m']]
+    },
+    {
+      id: 'prepreka',
+      title: 'Trebaš li doseći preko prepreke?',
+      hint: 'Na primjer preko krova, ograde ili stabla.',
+      summary: 'Preko prepreke',
+      options: [['da', 'Da'], ['ne', 'Ne']]
+    },
+    {
+      id: 'lokacija',
+      title: 'Gdje se radi?',
+      hint: 'Odaberi ono što najbolje opisuje mjesto rada.',
+      summary: 'Mjesto rada',
+      options: [['unutra', 'Unutra'], ['vani-ravno', 'Vani, na ravnom'], ['vani-neravno', 'Vani, na neravnom terenu'], ['cesta', 'Na cesti ili u gradu']]
+    },
+    {
+      id: 'uski',
+      title: 'Ima li uskih prolaza ili osjetljivog poda?',
+      hint: 'Na primjer uska vrata i hodnici, pločice, parket ili travnjak.',
+      summary: 'Uski prolazi ili osjetljiv pod',
+      options: [['da', 'Da'], ['ne', 'Ne']]
+    },
+    {
+      id: 'ljudi',
+      title: 'Koliko ljudi treba biti u košari?',
+      hint: 'Računaj sve koji će u isto vrijeme raditi gore.',
+      summary: 'Ljudi u košari',
+      options: [['1-2', '1–2'], ['3+', '3 ili više']]
+    }
+  ];
+
+  const labelOf = (id, value) => {
+    const q = QUESTIONS.find((x) => x.id === id);
+    const o = q && q.options.find((x) => x[0] === value);
+    return o ? o[1] : '';
+  };
+
+  /* ---------- Pravila za preporuku ---------- */
+  const POWER_SENTENCE = {
+    'unutra': 'Za rad unutra preporučuje se električna izvedba jer je tiha i ne ispušta plinove.',
+    'vani-ravno': 'Vani na ravnom može se koristiti električna ili dizelska izvedba, ovisno o trajanju rada i mogućnosti punjenja.',
+    'vani-neravno': 'Za neravan teren preporučuje se dizelska izvedba s pogonom 4x4.'
+  };
+  const POWER_TAG = {
+    'unutra': 'Električna izvedba',
+    'vani-ravno': 'Električna ili dizelska',
+    'vani-neravno': 'Dizelska, pogon 4x4'
+  };
+
+  function recommend(a) {
+    const high = a.visina === '20-30' || a.visina === '30+';
+    const why = [];
+    let key, name, variant;
+
+    if (a.lokacija === 'cesta') {
+      key = 'vozilo';
+      name = 'Platforma na vozilu';
+      variant = 'Na kamionu ili kombiju';
+      why.push('Radiš na cesti ili u gradu, pa je najpraktičnija platforma na vozilu: sama dolazi na lokaciju i brzo se postavlja, bez posebnog prijevoza.');
+      why.push('Najbolja je kad se tijekom dana mijenja više mjesta rada, na primjer kod rasvjete, fasada ili orezivanja drveća.');
+    } else if (a.uski === 'da') {
+      key = 'pauk';
+      name = 'Pauk platforma';
+      variant = 'Na gusjenicama';
+      why.push('Zbog uskih prolaza ili osjetljivog poda najbolji izbor je pauk platforma.');
+      why.push('Kompaktna je pa prolazi kroz uža vrata i prolaze, a gusjenice i stabilizatori raspoređuju težinu pa ne oštećuju podlogu.');
+      if (a.prepreka === 'da') {
+        why.push('Ruka joj može doseći i preko prepreke.');
+      } else if (a.lokacija === 'vani-neravno') {
+        why.push('Na gusjenicama se dobro snalazi i na neravnom terenu.');
+      }
+    } else if (a.prepreka === 'da') {
+      if (high) {
+        key = 'teleskopska';
+        name = 'Teleskopska platforma';
+        why.push('Trebaš doseći preko prepreke na velikoj visini, a teleskopska platforma ima najveći doseg u visinu i u stranu.');
+      } else {
+        key = 'zglobna';
+        name = 'Zglobna platforma';
+        why.push('Trebaš doseći preko prepreke, a zglobna platforma ima ruku koja se savija, pa košaru možeš podignuti gore i preko ruba krova, ograde ili stabla.');
+      }
+      why.push(POWER_SENTENCE[a.lokacija]);
+      variant = POWER_TAG[a.lokacija];
+    } else if (high) {
+      key = 'teleskopska';
+      name = 'Teleskopska platforma';
+      why.push('Za rad iznad 20 m najbolja je teleskopska platforma jer ima najveću radnu visinu i doseg.');
+      why.push('Ravna teleskopska ruka brzo dolazi do mjesta rada, a najbolje joj odgovara otvoren prostor.');
+      why.push(POWER_SENTENCE[a.lokacija]);
+      variant = POWER_TAG[a.lokacija];
+    } else {
+      key = 'skarasta';
+      name = 'Škarasta platforma';
+      why.push('Ne trebaš doseg u stranu, pa je škarasta platforma najjednostavnije i najisplativije rješenje: diže se ravno gore i ima veliku, stabilnu košaru za ljude i alat.');
+      why.push(POWER_SENTENCE[a.lokacija]);
+      if (a.ljudi === '3+') why.push('Velika košara pogodna je i za tri ili više osoba.');
+      variant = POWER_TAG[a.lokacija];
+    }
+
+    let warning = '';
+    if (a.ljudi === '3+' && key !== 'skarasta') {
+      warning = 'za 3 ili više osoba provjeri nosivost košare. Košare platformi s rukom često su predviđene za 2 osobe s alatom, pa će možda trebati veća košara ili dvije platforme.';
+    }
+
+    return { key, name, variant, why, warning };
+  }
+
+  /* ---------- Stanje aplikacije ---------- */
+  const emptyForm = () => ({ ime: '', from: '', to: '', lok: '' });
+  const state = { step: 0, answers: {}, form: emptyForm(), rec: null };
+  const app = document.getElementById('app');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let busy = false;
+
+  function render(moveFocus) {
+    if (state.step < QUESTIONS.length) renderQuestion();
+    else renderResult();
+
+    if (moveFocus) {
+      const heading = app.querySelector('h2');
+      if (heading) heading.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+    }
+  }
+
+  function renderQuestion() {
+    const q = QUESTIONS[state.step];
+    const n = state.step + 1;
+    const total = QUESTIONS.length;
+    const pct = Math.round((state.step / total) * 100);
+
+    app.innerHTML = `
+      <section class="card enter">
+        <p class="step">Pitanje ${n} od ${total}</p>
+        <div class="bar" role="progressbar" aria-label="Napredak" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}">
+          <span style="width:${pct}%"></span>
+        </div>
+        <h2 id="q-title" tabindex="-1">${q.title}</h2>
+        <p class="hint">${q.hint}</p>
+        <div class="options" role="group" aria-labelledby="q-title">
+          ${q.options.map(([value, label]) => `
+            <button type="button" class="opt" data-value="${value}" aria-pressed="${state.answers[q.id] === value}">
+              <span>${label}</span>${CHEVRON}
+            </button>`).join('')}
+        </div>
+        ${state.step > 0 ? `<div class="nav"><button type="button" class="link" data-action="back">${BACK}Natrag</button></div>` : ''}
+      </section>`;
+  }
+
+  function renderResult() {
+    const a = state.answers;
+    const rec = recommend(a);
+    state.rec = rec;
+
+    app.innerHTML = `
+      <section class="card enter">
+        <p class="step">Gotovo</p>
+        <div class="bar" aria-hidden="true"><span style="width:100%"></span></div>
+
+        <p class="eyebrow">Preporuka</p>
+        <div class="rec">
+          <div class="rec-icon">${ICONS[rec.key]}</div>
+          <div>
+            <h2 id="r-title" tabindex="-1">${rec.name}</h2>
+            <span class="tag">${rec.variant}</span>
+          </div>
+        </div>
+
+        <p class="why">${rec.why.join(' ')}</p>
+        ${rec.warning ? `<p class="note warn"><strong>Napomena:</strong> ${rec.warning}</p>` : ''}
+        <p class="note info">Ovo je okvirna preporuka. Konačan odabir stroja potvrđuje stručnjak nakon što pogleda detalje posla.</p>
+        <p class="note info"><strong>Savjet:</strong> radna visina je otprilike visina poda košare plus 2 m.</p>
+
+        <dl class="answers">
+          ${QUESTIONS.map((q) => `<dt>${q.summary}</dt><dd>${labelOf(q.id, a[q.id])}</dd>`).join('')}
+        </dl>
+
+        <div class="section">
+          <h3>Pošalji upit</h3>
+          <p class="hint">Upiši podatke, a tekst upita složit će se sam. Kopiraj ga u e-mail ili poruku.</p>
+          <div class="fields">
+            <div>
+              <label for="f-ime">Ime i prezime</label>
+              <input id="f-ime" type="text" autocomplete="name">
+            </div>
+            <div class="row2">
+              <div>
+                <label for="f-from">Najam od</label>
+                <input id="f-from" type="date">
+              </div>
+              <div>
+                <label for="f-to">Najam do</label>
+                <input id="f-to" type="date">
+              </div>
+            </div>
+            <div>
+              <label for="f-lok">Lokacija rada</label>
+              <input id="f-lok" type="text" placeholder="npr. Zagreb">
+            </div>
+          </div>
+          <label for="upit" class="upit-label">Tekst upita</label>
+          <textarea id="upit" readonly></textarea>
+          <div class="actions">
+            <button type="button" class="btn primary" data-action="copy">Kopiraj upit</button>
+          </div>
+          <p class="status" id="copy-status" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="actions end-actions">
+          <button type="button" class="btn secondary" data-action="edit">${BACK}Promijeni odgovore</button>
+          <button type="button" class="btn secondary" data-action="restart">Kreni ispočetka</button>
+        </div>
+      </section>`;
+
+    const fields = { ime: '#f-ime', from: '#f-from', to: '#f-to', lok: '#f-lok' };
+    Object.entries(fields).forEach(([key, sel]) => {
+      const input = app.querySelector(sel);
+      input.value = state.form[key];
+      input.addEventListener('input', () => {
+        state.form[key] = input.value;
+        if (key === 'from') app.querySelector('#f-to').min = input.value;
+        updateUpit();
+      });
+    });
+    if (state.form.from) app.querySelector('#f-to').min = state.form.from;
+    updateUpit();
+  }
+
+  /* ---------- Tekst upita ---------- */
+  function fmtDate(value) {
+    if (!value) return '';
+    const [y, m, d] = value.split('-');
+    return `${Number(d)}. ${Number(m)}. ${y}.`;
+  }
+
+  function composeUpit() {
+    const a = state.answers;
+    const r = state.rec;
+    const f = state.form;
+    return [
+      'Poštovani,',
+      '',
+      `zanima me najam platforme. Prema pomoćniku za odabir, preporuka je: ${r.name.toLowerCase()} (${r.variant.toLowerCase()}).`,
+      '',
+      'Podaci o poslu:',
+      `- visina rada: ${labelOf('visina', a.visina)}`,
+      `- doseg preko prepreke: ${labelOf('prepreka', a.prepreka).toLowerCase()}`,
+      `- mjesto rada: ${labelOf('lokacija', a.lokacija).toLowerCase()}`,
+      `- uski prolazi ili osjetljiv pod: ${labelOf('uski', a.uski).toLowerCase()}`,
+      `- broj ljudi u košari: ${labelOf('ljudi', a.ljudi)}`,
+      '',
+      `Termin najma: od ${fmtDate(f.from) || '[datum]'} do ${fmtDate(f.to) || '[datum]'}`,
+      `Lokacija: ${f.lok.trim() || '[lokacija]'}`,
+      '',
+      'Molim vas ponudu i potvrdu odgovarajućeg stroja.',
+      '',
+      'Lijep pozdrav,',
+      f.ime.trim() || '[ime i prezime]'
+    ].join('\n');
+  }
+
+  function updateUpit() {
+    const box = app.querySelector('#upit');
+    if (box) box.value = composeUpit();
+    const status = app.querySelector('#copy-status');
+    if (status) { status.textContent = ''; status.classList.remove('err'); }
+  }
+
+  async function copyUpit() {
+    const text = composeUpit();
+    const status = app.querySelector('#copy-status');
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    } catch (e) {
+      const box = app.querySelector('#upit');
+      box.removeAttribute('readonly');
+      box.select();
+      try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+      box.setAttribute('readonly', '');
+      const sel = window.getSelection();
+      if (sel) sel.removeAllRanges();
+    }
+    status.classList.toggle('err', !ok);
+    status.textContent = ok
+      ? 'Upit je kopiran. Zalijepi ga u e-mail ili poruku.'
+      : 'Kopiranje nije uspjelo. Označi tekst upita i kopiraj ga ručno.';
+  }
+
+  /* ---------- Klikovi ---------- */
+  app.addEventListener('click', (e) => {
+    const opt = e.target.closest('.opt');
+    if (opt) {
+      if (busy) return;
+      busy = true;
+      const q = QUESTIONS[state.step];
+      state.answers[q.id] = opt.dataset.value;
+      app.querySelectorAll('.opt').forEach((b) => b.setAttribute('aria-pressed', String(b === opt)));
+      setTimeout(() => {
+        state.step += 1;
+        busy = false;
+        render(true);
+      }, reducedMotion ? 0 : 140);
+      return;
+    }
+
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    switch (btn.dataset.action) {
+      case 'back':
+        state.step = Math.max(0, state.step - 1);
+        render(true);
+        break;
+      case 'edit':
+        state.step = QUESTIONS.length - 1;
+        render(true);
+        break;
+      case 'restart':
+        state.step = 0;
+        state.answers = {};
+        state.form = emptyForm();
+        render(true);
+        break;
+      case 'copy':
+        copyUpit();
+        break;
+    }
+  });
+
+  render(false);
+})();
+</script>
+</body>
+</html>
